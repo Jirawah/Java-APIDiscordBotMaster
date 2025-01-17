@@ -19,8 +19,11 @@ public class BotListener extends ListenerAdapter {
                 event.getChannel().sendMessage("Pong ! 🏓").queue();
             } else if (event.getMessage().getContentRaw().equalsIgnoreCase("!join")) {
                 joinVoiceChannel(event);
+            } else if (event.getMessage().getContentRaw().equalsIgnoreCase("!disconnect")) {
+                leaveVoiceChannel(event); // Déconnexion du canal vocal
             } else if (event.getMessage().getContentRaw().equalsIgnoreCase("!connectMyAcc")) {
                 listUsersInVoiceChannel(event); // Liste des utilisateurs dans le canal vocal
+                event.getChannel().sendMessage("Connected").queue();
             }
         }
     }
@@ -46,6 +49,38 @@ public class BotListener extends ListenerAdapter {
         }
     }
 
+    private void leaveVoiceChannel(MessageReceivedEvent event) {
+        try {
+            Guild guild = event.getGuild();
+            AudioManager audioManager = guild.getAudioManager();
+
+            // Vérifie si le bot est connecté à un canal vocal
+            if (audioManager.isConnected()) {
+                audioManager.closeAudioConnection(); // Déconnexion du bot
+                event.getChannel().sendMessage("Déconnecté du canal vocal !").queue();
+                System.out.println("Le bot a quitté le canal vocal.");
+            } else {
+                // Vérifie si le bot est dans un canal vocal via son état vocal
+                var selfMember = guild.getSelfMember(); // Récupère les informations du bot dans la guilde
+                var connectedChannel = selfMember.getVoiceState().getChannel(); // Vérifie s'il est connecté à un canal vocal
+
+                if (connectedChannel != null) {
+                    // Si le bot est dans un canal vocal, le déconnecter de force
+                    audioManager.closeAudioConnection();
+                    event.getChannel().sendMessage("Déconnecté du canal vocal (forcé) !").queue();
+                    System.out.println("Le bot a quitté le canal vocal (forcé).");
+                } else {
+                    // Si le bot n'est connecté nulle part
+                    event.getChannel().sendMessage("Le bot n'est pas connecté à un canal vocal.").queue();
+                    System.out.println("Le bot n'est pas connecté à un canal vocal.");
+                }
+            }
+        } catch (Exception e) {
+            event.getChannel().sendMessage("Erreur lors de la déconnexion du canal vocal.").queue();
+            e.printStackTrace();
+        }
+    }
+
     private void listUsersInVoiceChannel(MessageReceivedEvent event) {
         try {
             Guild guild = event.getGuild();
@@ -61,15 +96,20 @@ public class BotListener extends ListenerAdapter {
                     // Créer un tableau JSON pour stocker les données des utilisateurs
                     JSONArray usersData = new JSONArray();
 
-                    // Pour chaque membre, obtenir l'ID et l'avatar
+                    // Pour chaque membre, obtenir les informations nécessaires
                     for (var member : membersInChannel) {
                         String userId = member.getId(); // ID de l'utilisateur
                         String avatarUrl = member.getUser().getAvatarUrl(); // URL de l'avatar
+                        String username = member.getUser().getName(); // Nom d'utilisateur
+                        String discriminator = member.getUser().getDiscriminator(); // #XXXX
+                        String nickname = member.getNickname() != null ? member.getNickname() : username; // Surnom (ou nom d'utilisateur par défaut)
 
                         // Créer un objet JSON pour chaque utilisateur
                         JSONObject userJson = new JSONObject();
                         userJson.put("id", userId);
                         userJson.put("avatarUrl", avatarUrl);
+                        userJson.put("username", username + "#" + discriminator); // Nom d'utilisateur complet
+                        userJson.put("nickname", nickname); // Pseudonyme ou nom par défaut
 
                         // Ajouter l'objet utilisateur au tableau
                         usersData.put(userJson);
@@ -88,6 +128,49 @@ public class BotListener extends ListenerAdapter {
             e.printStackTrace();
         }
     }
+//    private void listUsersInVoiceChannel(MessageReceivedEvent event) {
+//        try {
+//            Guild guild = event.getGuild();
+//            String voiceChannelId = "1100158192345952378"; // ID du canal vocal
+//            VoiceChannel voiceChannel = guild.getVoiceChannelById(voiceChannelId);
+//
+//            if (voiceChannel != null) {
+//                // Récupérer la liste des membres dans ce canal vocal
+//                var membersInChannel = voiceChannel.getMembers();
+//
+//                // Si des membres sont présents
+//                if (!membersInChannel.isEmpty()) {
+//                    // Créer un tableau JSON pour stocker les données des utilisateurs
+//                    JSONArray usersData = new JSONArray();
+//
+//                    // Pour chaque membre, obtenir l'ID et l'avatar
+//                    for (var member : membersInChannel) {
+//                        String userId = member.getId(); // ID de l'utilisateur
+//                        String avatarUrl = member.getUser().getAvatarUrl(); // URL de l'avatar
+//
+//                        // Créer un objet JSON pour chaque utilisateur
+//                        JSONObject userJson = new JSONObject();
+//                        userJson.put("id", userId);
+//                        userJson.put("avatarUrl", avatarUrl);
+//
+//                        // Ajouter l'objet utilisateur au tableau
+//                        usersData.put(userJson);
+//                    }
+//
+//                    // Envoyer les données au programme via HTTP
+//                    sendDataToProgram(usersData);
+//                } else {
+//                    System.out.println("Aucun utilisateur connecté au canal vocal.");
+//                }
+//            } else {
+//                System.out.println("Canal vocal introuvable.");
+//            }
+//        } catch (Exception e) {
+//            System.out.println("Erreur lors de la récupération des utilisateurs dans le canal vocal.");
+//            e.printStackTrace();
+//        }
+//    }
+
 //    private void listUsersInVoiceChannel(MessageReceivedEvent event) {
 //        try {
 //            Guild guild = event.getGuild();

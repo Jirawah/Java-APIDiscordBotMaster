@@ -1,4 +1,5 @@
 package org.example;
+
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
@@ -11,9 +12,33 @@ public class Main {
                     .build()
                     .awaitReady();
 
-            System.out.println("Bot démarré et prêt !");
+
+
+
+
+
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    if (jda != null) {
+                        jda.shutdown(); // Ferme proprement la connexion avec Discord
+                        System.out.println("Le bot s'est déconnecté proprement.");
+                    }
+                } catch (Exception e) {
+                    System.out.println("Erreur lors de la fermeture du bot.");
+                    e.printStackTrace();
+                }
+            }));
+
+            System.out.println("Bot démarré !");
         } catch (Exception e) {
+            System.out.println("Erreur lors du démarrage du bot.");
             e.printStackTrace();
         }
     }
 }
+//            System.out.println("Bot démarré et prêt !");
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+//}
