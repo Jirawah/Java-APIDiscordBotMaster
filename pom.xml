@@ -49,6 +49,7 @@
             <version>20210307</version>
         </dependency>
 
+        <!-- JDA Core -->
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
